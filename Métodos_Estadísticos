@@ -1,0 +1,73 @@
+pacientes <- read.csv("pacientes.csv")
+View(pacientes)
+
+library(cluster, lib.loc = "/usr/lib/R/library")
+library(corrplot)
+library(curl, lib.loc = "/usr/lib/R/site-library")
+library(data.table, lib.loc = "/usr/lib/R/site-library")
+library(dplyr)
+library(factoextra)
+library(FactoMineR)
+library(future.apply)
+library(ggpubr)
+library(plyr)
+library(purrr)
+library(psych)
+library(scales)
+str(pacientes)
+
+#EDA explorando con solo variables numéricas. Transformación de variables
+pacientes_2 <- pacientes %>%
+mutate(Fumador.Activo = ifelse(Fumador.Activo == "Si","1","0"),
+X.Diabetes. = ifelse(X.Diabetes. == "Si","1","0"),
+Hipertensión.Arterial.Sistemica = ifelse(Hipertensión.Arterial.Sistemica == "Si","1","0"),
+HTA...DM = ifelse(HTA...DM == "Si","1","0"),
+Antecedentes.Fliar..Enfermedad.Coronaria = ifelse(Antecedentes.Fliar..Enfermedad.Coronaria == "Si","1","0"),
+HTA.COMPENSADOS = ifelse(HTA.COMPENSADOS == "Si","1","0"),
+HTA.Y.DM.COMPENSADA = ifelse(HTA.Y.DM.COMPENSADA == "Si","1","0"))
+
+#Ajuste tipo variables
+pacientes_2$Fumador.Activo = gsub(",", "", pacientes_2$Fumador.Activo) %>% as.numeric()
+pacientes_2$X.Diabetes. = gsub(",", "", pacientes_2$X.Diabetes.) %>% as.numeric()
+pacientes_2$Hipertensión.Arterial.Sistemica = gsub(",", "", pacientes_2$Hipertensión.Arterial.Sistemica) %>% as.numeric()
+pacientes_2$HTA...DM = gsub(",", "", pacientes_2$HTA...DM) %>% as.numeric()
+pacientes_2$Antecedentes.Fliar..Enfermedad.Coronaria = gsub(",", "", pacientes_2$Antecedentes.Fliar..Enfermedad.Coronaria) %>% as.numeric()
+pacientes_2$HTA.COMPENSADOS = gsub(",", "", pacientes_2$HTA.COMPENSADOS) %>% as.numeric()
+pacientes_2$DM.COMPENSADO = gsub(",", "", pacientes_2$DM.COMPENSADO) %>% as.numeric()
+pacientes_2$HTA.Y.DM.COMPENSADA = gsub(",", "", pacientes_2$HTA.Y.DM.COMPENSADA) %>% as.numeric()
+pacientes_2$Calculo.de..TFG.corregida..Cockcroft.Gault. = gsub(",", "", pacientes_2$Calculo.de..TFG.corregida..Cockcroft.Gault.) %>% as.numeric()
+
+library(psych)
+#Explorar correlaciones por grupos de tios de indicadores (relacionados con enfermedades)
+pairs.panels(pacientes_2[,c(11,12,37,39,5,6,7)], bg = c("red", "white", "black","blue"),pch=28,
+main = "Relación Tensión arterial con variables salida")    
+pairs.panels(pacientes_2[,c(11,12,37,39,5,6,7)], pch=28,     
+main = "Relación Tensión arterial con cinco variables salida")
+pairs.panels(pacientes_2[,c(11,12,37,39,5,6,7)], method= "pearson",density="TRUE", ellipses= FALSE, pch=28,
+main = "Relación Tensión arterial con cinco variables salida")
+pairs.panels(pacientes_2[,c(14,15,17,16,37,39,5,6,7)], bg = c("red", "white", "black","blue"),pch=28,
+main = "Relación Colesterol y Triglicéridos con cinco variables salida")
+pairs.panels(pacientes_2[,c(19,37,39,5,6,7)], bg = c("red", "white", "black","blue"),pch=28,
+main = "Hemoglobina con cinco variables salida")
+pairs.panels(pacientes_2[,c(22,23,37,39,5,6,7)], bg = c("red", "white", "black","blue"),pch=28,
+main = "Glicemia con cinco variables salida")
+pairs.panels(pacientes_2[,c(30,32,33,34,37,39,5,6,7)], bg = c("red", "white", "black","blue"),pch=28,
+main = "Función Renal con cinco variables salida")
+
+#Correlaciones
+library(corrplot)
+#correlacion de edad, estar medicado(2) y tener una o las dos enfermedades cronicas (6 variables)
+# vs tension + imc
+cor(pacientes_2[,c(1,37,39,5,6,7,11,12,28)],use = "complete.obs")
+#correlacion de edad, estar medicado(2) y tener una o las dos enfermedades cronicas (6 variables)
+# vs colesterol y trigliceridos
+cor(pacientes_2[,c(1,37,39,5,6,7,14,15,17,16)],use = "complete.obs")
+#correlacion de edad, estar medicado(2) y tener una o las dos enfermedades cronicas (6 variables)
+# vs hemoglobina y glicemia
+cor(pacientes_2[,c(1,37,39,5,6,7,19,22)],use = "complete.obs")
+#correlacion de edad, estar medicado(2) y tener una o las dos enfermedades cronicas (6 variables)
+# vs orina y funcion renal
+cor(pacientes_2[,c(1,37,39,5,6,7,30,32,33,34)],use = "complete.obs")
+
+#Descubriendo a qué corresponde género 1 y género 2 porque el dataset no tiene metadata.
+
